@@ -107,6 +107,29 @@ pmset -g batt
 | Quit Coffeine | `sudo pmset -a disablesleep 0` | Restores normal sleep automatically when the app quits |
 | Open at Login | none | Starts the app and restores the last state after a restart |
 
+## Run long tasks in the background (locked screen)
+
+You can lock the screen (⌃⌘Q) and let long tasks run: AI coding agents such as Claude Code, builds, downloads, or backups.
+
+- Locking the screen does not stop processes. Terminal sessions, CLI tools, and network connections continue to run.
+- The real risk is sleep. After you lock the screen, the display turns off. Without Coffeine, the Mac then goes to sleep after the time set in Energy settings, and sleep stops all tasks.
+- With Coffeine in **Prevent Sleep** mode, the Mac does not go to sleep. Tasks continue to run with a locked screen, and also with the lid closed. You do not need **Keep Display On** for this. The display can turn off.
+- Use **Prevent Sleep For** when you know how long the task takes. Coffeine restores normal sleep when the time is up.
+
+Things to check before you leave the Mac:
+
+- **Interactive prompts**: a tool that waits for your input (for example, a permission prompt in an AI agent) stops until you come back. For unattended work, use a mode that does not ask for confirmation.
+- **Battery**: the battery guard restores normal sleep at 15%, and then the Mac goes to sleep. For long tasks, connect the charger.
+- **Heat**: do not put a closed Mac that does not sleep into a bag.
+
+Without Coffeine, you can keep the Mac awake only while one command runs:
+
+```sh
+caffeinate -i claude      # or any other long command
+```
+
+`caffeinate` stops when the command ends. It does not block sleep when the lid is closed. Only `pmset disablesleep` (Coffeine) does that.
+
 ## Check the state
 
 ```sh
