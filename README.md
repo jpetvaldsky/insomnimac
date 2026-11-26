@@ -4,7 +4,8 @@ Coffeine is a macOS menu bar app that controls whether your Mac can sleep. In "P
 
 ## Features
 
-- **Prevent Sleep / Allow Sleep** (⌘S): blocks all system sleep, also when the lid is closed.
+- **Prevent Sleep Indefinitely / Allow Sleep** (⌘S): blocks all system sleep, also when the lid is closed.
+- **Prevent Sleep For**: blocks sleep for a fixed time (15 or 30 minutes, 1, 2, 3, 5, or 8 hours). The menu bar shows the remaining time next to the cup. When the time is up, Coffeine restores normal sleep. Use "Restart Timer" to start a new interval from now.
 - **Keep Display On**: the display does not turn off when the Mac is idle.
 - **Allow Sleep When Battery ≤ 15%**: a safety guard. When the Mac runs on battery and the charge drops to 15%, Coffeine restores normal sleep. This option is on by default.
 - **Open at Login**: Coffeine starts automatically when you log in.
@@ -99,7 +100,8 @@ pmset -g batt
 
 | Coffeine menu item | Terminal equivalent | What the app adds |
 |---|---|---|
-| Prevent Sleep / Allow Sleep | `sudo pmset -a disablesleep 1` / `0` | No password after the first setup, and a visible state in the menu bar |
+| Prevent Sleep Indefinitely / Allow Sleep | `sudo pmset -a disablesleep 1` / `0` | No password after the first setup, and a visible state in the menu bar |
+| Prevent Sleep For | `sudo pmset -a disablesleep 1; sleep 3600; sudo pmset -a disablesleep 0` | Shows the remaining time, survives a closed Terminal and an app restart |
 | Keep Display On | `caffeinate -d` | Runs in the background, no open Terminal window |
 | Allow Sleep When Battery ≤ 15% | `pmset -g batt` (manual check) | Checks automatically and allows sleep again at 15% |
 | Quit Coffeine | `sudo pmset -a disablesleep 0` | Restores normal sleep automatically when the app quits |

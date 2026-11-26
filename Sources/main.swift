@@ -122,8 +122,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let systemAssertion = Assertion()
     private let displayAssertion = Assertion()
     private var batteryTimer: Timer?
+    private var countdownTimer: Timer?
 
     private let lowBatteryLimit = 15
+
+    /// Intervals for "Prevent Sleep For" (title, minutes).
+    private let intervals: [(String, Int)] = [
+        ("15 Minutes", 15), ("30 Minutes", 30), ("1 Hour", 60), ("2 Hours", 120),
+        ("3 Hours", 180), ("5 Hours", 300), ("8 Hours", 480),
+    ]
 
     // Saved settings
     private var preventSleep: Bool {
@@ -133,6 +140,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var keepDisplayOn: Bool {
         get { defaults.bool(forKey: "keepDisplayOn") }
         set { defaults.set(newValue, forKey: "keepDisplayOn") }
+    }
+    /// End of a timed "prevent sleep" period. nil means no time limit.
+    private var sleepUntil: Date? {
+        get { defaults.object(forKey: "sleepUntil") as? Date }
+        set { defaults.set(newValue, forKey: "sleepUntil") }
     }
     private var batteryGuard: Bool {
         get { defaults.object(forKey: "batteryGuard") as? Bool ?? true }
@@ -169,6 +181,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // MARK: State
 
     private func apply() {
+        // A timed period that ended while the app was not running.
+        if let until = sleepUntil, until <= Date() { preventSleep = false }
+
         if preventSleep {
             if !Power.isHelperInstalled {
                 if !Power.installHelper() {
@@ -187,7 +202,40 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         systemAssertion.set(preventSleep, type: kIOPMAssertPreventUserIdleSystemSleep, reason: "Coffeine: sleep prevented")
         displayAssertion.set(preventSleep && keepDisplayOn, type: kIOPMAssertPreventUserIdleDisplaySleep, reason: "Coffeine: display kept on")
+        if !preventSleep { sleepUntil = nil }
+        updateCountdown()
         updateIcon()
+    }
+
+    /// Runs a 15 s timer while a timed period is active. Ends the period when the time is up.
+    private func updateCountdown() {
+        guard preventSleep, sleepUntil != nil else {
+            countdownTimer?.invalidate()
+            countdownTimer = nil
+            return
+        }
+        if countdownTimer == nil {
+            let t = Timer(timeInterval: 15, repeats: true) { [weak self] _ in self?.tick() }
+            RunLoop.main.add(t, forMode: .common)
+            countdownTimer = t
+        }
+    }
+
+    private func tick() {
+        guard let until = sleepUntil else { return }
+        if until <= Date() {
+            preventSleep = false
+            apply()
+        } else {
+            updateIcon()
+        }
+    }
+
+    /// Remaining time as "h:mm", rounded up to the next minute.
+    private func remainingText() -> String? {
+        guard preventSleep, let until = sleepUntil else { return nil }
+        let minutes = max(0, Int((until.timeIntervalSinceNow / 60).rounded(.up)))
+        return String(format: "%d:%02d", minutes / 60, minutes % 60)
     }
 
     private func checkBattery() {
@@ -203,7 +251,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let img = NSImage(systemSymbolName: symbol, accessibilityDescription: "Coffeine")
         img?.isTemplate = true
         statusItem.button?.image = img
-        statusItem.button?.toolTip = preventSleep ? "Coffeine: Mac stays awake" : "Coffeine: normal sleep"
+        let remaining = remainingText()
+        statusItem.button?.title = remaining.map { " " + $0 } ?? ""
+        statusItem.button?.imagePosition = .imageLeading
+        statusItem.button?.toolTip = !preventSleep ? "Coffeine: normal sleep"
+            : remaining.map { "Coffeine: Mac stays awake, \($0) left" } ?? "Coffeine: Mac stays awake"
     }
 
     // MARK: Menu
@@ -211,12 +263,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
 
-        let header = NSMenuItem(title: preventSleep ? "Mac stays AWAKE (even with lid closed)" : "Mac sleeps normally", action: nil, keyEquivalent: "")
+        var headerTitle = "Mac sleeps normally"
+        if preventSleep {
+            if let until = sleepUntil, let left = remainingText() {
+                let time = DateFormatter.localizedString(from: until, dateStyle: .none, timeStyle: .short)
+                headerTitle = "Mac stays AWAKE until \(time) (\(left) left)"
+            } else {
+                headerTitle = "Mac stays AWAKE (even with lid closed)"
+            }
+        }
+        let header = NSMenuItem(title: headerTitle, action: nil, keyEquivalent: "")
         header.isEnabled = false
         menu.addItem(header)
         menu.addItem(.separator())
 
-        menu.addItem(item(preventSleep ? "Allow Sleep" : "Prevent Sleep", #selector(togglePrevent), key: "s"))
+        if preventSleep {
+            menu.addItem(item("Allow Sleep", #selector(allowSleep), key: "s"))
+        }
+        if !preventSleep || sleepUntil != nil {
+            menu.addItem(item("Prevent Sleep Indefinitely", #selector(preventIndefinitely), key: preventSleep ? "" : "s"))
+        }
+
+        let forItem = NSMenuItem(title: preventSleep && sleepUntil != nil ? "Restart Timer" : "Prevent Sleep For", action: nil, keyEquivalent: "")
+        let sub = NSMenu()
+        for (title, minutes) in intervals {
+            let i = item(title, #selector(preventForInterval(_:)))
+            i.tag = minutes
+            sub.addItem(i)
+        }
+        forItem.submenu = sub
+        menu.addItem(forItem)
+        menu.addItem(.separator())
 
         let display = item("Keep Display On", #selector(toggleDisplay))
         display.state = keepDisplayOn ? .on : .off
@@ -246,7 +323,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return i
     }
 
-    @objc private func togglePrevent() { preventSleep.toggle(); apply() }
+    @objc private func allowSleep() { preventSleep = false; apply() }
+
+    @objc private func preventIndefinitely() {
+        sleepUntil = nil
+        preventSleep = true
+        apply()
+    }
+
+    @objc private func preventForInterval(_ sender: NSMenuItem) {
+        sleepUntil = Date().addingTimeInterval(TimeInterval(sender.tag * 60))
+        preventSleep = true
+        apply()
+    }
     @objc private func toggleDisplay() { keepDisplayOn.toggle(); apply() }
     @objc private func toggleBatteryGuard() { batteryGuard.toggle() }
 

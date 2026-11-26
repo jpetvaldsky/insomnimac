@@ -31,6 +31,7 @@ README links `releases/latest/download/Coffeine.zip`, so the link always points 
   - The sudoers rule `/etc/sudoers.d/coffeine` allows exactly these two commands for the current user. The app installs it once with `NSAppleScript` "with administrator privileges" and validates it with `visudo -cf`.
 - `Assertion`: soft layer with IOPM assertions (`PreventUserIdleSystemSleep`, `PreventUserIdleDisplaySleep`).
 - `AppDelegate`: status item, menu (rebuilt in `menuNeedsUpdate`), settings in `UserDefaults`, battery guard timer (60 s, limit 15 %), login item with `SMAppService.mainApp`.
+- Timed mode: `sleepUntil` (`Date` in `UserDefaults`) stores the end of the period. `apply()` ends an expired period, also at launch. A 15 s `countdownTimer` runs only during a timed period, updates the remaining time in the status item title, and ends the period. Every path that sets `preventSleep = false` goes through `apply()`, which clears `sleepUntil`.
 
 ## Rules
 
