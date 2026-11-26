@@ -59,6 +59,52 @@ Coffeine also creates an IOPM assertion against idle sleep. When "Keep Display O
 
 Coffeine saves the last state and restores it after a restart.
 
+## Do the same in Terminal (without the app)
+
+Coffeine does not use any hidden magic. It is a menu bar switch for built-in macOS commands. You can run the same commands yourself in Terminal.
+
+**Prevent all sleep, also with the lid closed:**
+
+```sh
+sudo pmset -a disablesleep 1
+```
+
+**Allow sleep again:**
+
+```sh
+sudo pmset -a disablesleep 0
+```
+
+Important: `disablesleep` does not turn off when you close Terminal. The Mac stays awake until you run `sudo pmset -a disablesleep 0`.
+
+**Keep the display on** (equivalent of "Keep Display On"). Stop it with Ctrl+C:
+
+```sh
+caffeinate -d
+```
+
+**Block only idle sleep** (closing the lid still puts the Mac to sleep). Stop it with Ctrl+C:
+
+```sh
+caffeinate -i
+```
+
+**Check the battery level** (Coffeine does this every 60 seconds for the battery guard):
+
+```sh
+pmset -g batt
+```
+
+### What the app adds to these commands
+
+| Coffeine menu item | Terminal equivalent | What the app adds |
+|---|---|---|
+| Prevent Sleep / Allow Sleep | `sudo pmset -a disablesleep 1` / `0` | No password after the first setup, and a visible state in the menu bar |
+| Keep Display On | `caffeinate -d` | Runs in the background, no open Terminal window |
+| Allow Sleep When Battery ≤ 15% | `pmset -g batt` (manual check) | Checks automatically and allows sleep again at 15% |
+| Quit Coffeine | `sudo pmset -a disablesleep 0` | Restores normal sleep automatically when the app quits |
+| Open at Login | none | Starts the app and restores the last state after a restart |
+
 ## Check the state
 
 ```sh
