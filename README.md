@@ -13,6 +13,22 @@ Coffeine is a macOS menu bar app that controls whether your Mac can sleep. In "P
 
 The menu bar icon shows the state. A filled cup means that the Mac stays awake. An empty cup means normal sleep.
 
+## Download
+
+**[⬇ Download Coffeine.zip](https://github.com/jpetvaldsky/insomnimac/raw/main/build/Coffeine.zip)** (universal: Apple Silicon and Intel, macOS 13+)
+
+1. Unzip the file and move `Coffeine.app` to `/Applications`.
+2. Open `Coffeine.app`. The app is not notarized by Apple, so macOS blocks the first start.
+3. Open **System Settings › Privacy & Security**, scroll down, and click **Open Anyway** next to the Coffeine message.
+
+As an alternative to steps 2 and 3, remove the quarantine flag in Terminal:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/Coffeine.app
+```
+
+If you do not trust a prebuilt binary, build the app yourself (see below).
+
 ## Requirements
 
 - macOS 13 or later (Apple Silicon and Intel).
@@ -68,3 +84,4 @@ pmset -g | grep SleepDisabled   # "SleepDisabled 1" means that sleep is prevente
 | `Info.plist` | App metadata, `LSUIElement` (no Dock icon) |
 | `CoffeeeCup.icon` | App icon made with Icon Composer |
 | `build.sh` | Build and install script |
+| `build/` | Prebuilt `Coffeine.app` and `Coffeine.zip` (committed for direct download) |

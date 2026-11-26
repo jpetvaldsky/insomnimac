@@ -25,6 +25,10 @@ rm -f build/icon-partial.plist
 codesign --force --sign - "$APP"
 echo "Built $APP"
 
+# Zip for direct download from GitHub (ditto keeps the bundle structure and signature).
+ditto -c -k --keepParent "$APP" build/Coffeine.zip
+echo "Built build/Coffeine.zip"
+
 if [[ "${1:-}" == "--install" ]]; then
   pkill -x Coffeine 2>/dev/null || true
   sleep 1
