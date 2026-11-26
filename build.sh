@@ -1,5 +1,7 @@
 #!/bin/zsh
-# Builds Coffeine.app. Run with --install to copy it to /Applications and start it.
+# Builds Coffeine.app and Coffeine.zip.
+#   ./build.sh --install   also copies the app to /Applications and starts it.
+#   ./build.sh --release   also publishes Coffeine.zip as a GitHub Release (tag v<CFBundleShortVersionString>).
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -25,7 +27,7 @@ rm -f build/icon-partial.plist
 codesign --force --sign - "$APP"
 echo "Built $APP"
 
-# Zip for direct download from GitHub (ditto keeps the bundle structure and signature).
+# Zip for the GitHub Release (ditto keeps the bundle structure and signature).
 ditto -c -k --keepParent "$APP" build/Coffeine.zip
 echo "Built build/Coffeine.zip"
 
@@ -39,4 +41,16 @@ if [[ "${1:-}" == "--install" ]]; then
   /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f /Applications/Coffeine.app
   open /Applications/Coffeine.app
   echo "Installed to /Applications/Coffeine.app"
+fi
+
+if [[ "${1:-}" == "--release" ]]; then
+  VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Info.plist)
+  TAG="v$VERSION"
+  if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
+    echo "Commit your changes before a release." >&2; exit 1
+  fi
+  git push
+  gh release create "$TAG" build/Coffeine.zip --target "$(git rev-parse HEAD)" \
+    --title "Coffeine $VERSION" --generate-notes
+  echo "Released $TAG"
 fi

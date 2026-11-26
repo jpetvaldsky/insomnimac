@@ -7,9 +7,20 @@ Coffeine is a macOS menu bar app (AppKit, no Xcode project). It controls whether
 ## Build
 
 - `./build.sh` builds a universal (arm64 + x86_64) `build/Coffeine.app` with `swiftc`, ad-hoc signs it, and zips it to `build/Coffeine.zip`.
-- `build/` is committed on purpose: README links `build/Coffeine.zip` as a direct download. Rebuild and commit `build/` after every code change.
+- `build/` is ignored by git. Binaries go only to GitHub Releases, never into the repository.
 - `./build.sh --install` also kills the running app, copies the app to `/Applications`, refreshes LaunchServices, and starts it.
 - `actool` compiles `CoffeeeCup.icon` (Icon Composer) into `Assets.car` and `CoffeeeCup.icns`. If `actool` fails with "A required plugin failed to load", run `xcodebuild -runFirstLaunch`.
+
+## Release
+
+1. Increase `CFBundleShortVersionString` and `CFBundleVersion` in `Info.plist`.
+2. Commit the changes.
+3. Run `./build.sh --release`. The script pushes, then creates the tag `v<version>` and a GitHub Release with `Coffeine.zip`.
+
+README links `releases/latest/download/Coffeine.zip`, so the link always points to the newest release.
+
+## Notes
+
 - Deployment target: macOS 13.0 (needed for `SMAppService`).
 - There are no tests. Verify changes manually: build, install, use the menu, then check `pmset -g | grep SleepDisabled`.
 

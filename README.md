@@ -15,7 +15,7 @@ The menu bar icon shows the state. A filled cup means that the Mac stays awake. 
 
 ## Download
 
-**[⬇ Download Coffeine.zip](https://github.com/jpetvaldsky/insomnimac/raw/main/build/Coffeine.zip)** (universal: Apple Silicon and Intel, macOS 13+)
+**[⬇ Download Coffeine.zip](https://github.com/jpetvaldsky/insomnimac/releases/latest/download/Coffeine.zip)** (universal: Apple Silicon and Intel, macOS 13+). All versions are on the [Releases](https://github.com/jpetvaldsky/insomnimac/releases) page.
 
 1. Unzip the file and move `Coffeine.app` to `/Applications`.
 2. Open `Coffeine.app`. The app is not notarized by Apple, so macOS blocks the first start.
@@ -38,7 +38,7 @@ If you do not trust a prebuilt binary, build the app yourself (see below).
 ## Build and install
 
 ```sh
-./build.sh            # builds build/Coffeine.app
+./build.sh            # builds build/Coffeine.app and build/Coffeine.zip
 ./build.sh --install  # builds the app, copies it to /Applications, and starts it
 ```
 
@@ -84,4 +84,3 @@ pmset -g | grep SleepDisabled   # "SleepDisabled 1" means that sleep is prevente
 | `Info.plist` | App metadata, `LSUIElement` (no Dock icon) |
 | `CoffeeeCup.icon` | App icon made with Icon Composer |
 | `build.sh` | Build and install script |
-| `build/` | Prebuilt `Coffeine.app` and `Coffeine.zip` (committed for direct download) |
