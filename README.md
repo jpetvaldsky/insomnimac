@@ -1,70 +1,70 @@
 # Coffeine
 
-Coffeine je aplikace pro horní lištu macOS. Aplikace řídí, jestli se Mac může uspat. V režimu „Zakázat uspání“ se Mac neuspí ani po zaklopení víka.
+Coffeine is a macOS menu bar app that controls whether your Mac can sleep. In "Prevent Sleep" mode, the Mac stays awake even when you close the lid.
 
-## Funkce
+## Features
 
-- **Zakázat / Povolit uspání** (⌘S): zablokuje každé uspání systému, i po zaklopení víka.
-- **Nechat svítit displej**: displej nezhasne při nečinnosti.
-- **Povolit uspání při baterii ≤ 15 %**: pojistka. Pokud Mac běží na baterii a ta klesne na 15 %, Coffeine vrátí normální uspávání. Ve výchozím stavu je pojistka zapnutá.
-- **Spouštět při přihlášení**: Coffeine se spustí automaticky po přihlášení.
-- **Odebrat oprávnění pro pmset**: smaže pravidlo sudo, které aplikace vytvořila.
-- **Ukončit**: při ukončení Coffeine vrátí normální uspávání.
+- **Prevent Sleep / Allow Sleep** (⌘S): blocks all system sleep, also when the lid is closed.
+- **Keep Display On**: the display does not turn off when the Mac is idle.
+- **Allow Sleep When Battery ≤ 15%**: a safety guard. When the Mac runs on battery and the charge drops to 15%, Coffeine restores normal sleep. This option is on by default.
+- **Open at Login**: Coffeine starts automatically when you log in.
+- **Remove pmset Permission…**: removes the sudoers rule that Coffeine installed.
+- **Quit Coffeine**: Coffeine restores normal sleep when it quits.
 
-Ikona v liště ukazuje stav. Plný šálek znamená, že se Mac neuspí. Prázdný šálek znamená normální uspávání.
+The menu bar icon shows the state. A filled cup means that the Mac stays awake. An empty cup means normal sleep.
 
-## Požadavky
+## Requirements
 
-- macOS 13 nebo novější (Apple Silicon i Intel).
-- Xcode 26 nebo novější. Build potřebuje `swiftc` a `actool`.
-- Účet správce. Heslo je potřeba jednou, při prvním zakázání uspání.
+- macOS 13 or later (Apple Silicon and Intel).
+- Xcode 26 or later. The build uses `swiftc` and `actool`.
+- An administrator account. Coffeine asks for the password once, the first time you prevent sleep.
 
-## Sestavení a instalace
+## Build and install
 
 ```sh
-./build.sh            # sestaví build/Coffeine.app
-./build.sh --install  # sestaví aplikaci, zkopíruje ji do /Applications a spustí ji
+./build.sh            # builds build/Coffeine.app
+./build.sh --install  # builds the app, copies it to /Applications, and starts it
 ```
 
-Pokud `actool` hlásí chybu „A required plugin failed to load“, spusťte `xcodebuild -runFirstLaunch`.
+If `actool` reports "A required plugin failed to load", run `xcodebuild -runFirstLaunch`.
 
-## Jak to funguje
+## How it works
 
-Běžné nástroje (`caffeinate`, IOPM assertion) blokují jen uspání při nečinnosti. Uspání po zaklopení víka neblokují. Coffeine proto používá `pmset -a disablesleep 1`.
+Common tools (`caffeinate`, IOPM assertions) block only idle sleep. They do not block sleep when the lid is closed. Coffeine therefore uses `pmset -a disablesleep 1`.
 
-`pmset` potřebuje práva roota. Při prvním zakázání uspání Coffeine požádá o heslo správce. Potom vytvoří soubor `/etc/sudoers.d/coffeine`. Tento soubor dovolí aktuálnímu uživateli spustit bez hesla jen tyto dva příkazy:
+`pmset` needs root privileges. The first time you prevent sleep, Coffeine asks for an administrator password. Then it installs `/etc/sudoers.d/coffeine`. This file lets the current user run only these two commands without a password:
 
 ```
 /usr/bin/pmset -a disablesleep 0
 /usr/bin/pmset -a disablesleep 1
 ```
 
-Coffeine navíc vytvoří IOPM assertion proti uspání při nečinnosti. Pokud je zapnutá volba „Nechat svítit displej“, vytvoří také assertion pro displej.
+Coffeine also creates an IOPM assertion against idle sleep. When "Keep Display On" is on, it also creates an assertion for the display.
 
-Coffeine si pamatuje poslední stav a po restartu ho obnoví.
+Coffeine saves the last state and restores it after a restart.
 
-## Ověření stavu
+## Check the state
 
 ```sh
-pmset -g | grep SleepDisabled   # „SleepDisabled 1“ znamená, že uspání je zakázané
+pmset -g | grep SleepDisabled   # "SleepDisabled 1" means that sleep is prevented
 ```
 
-## Upozornění
+## Warnings
 
-- Pokud Coffeine spadne nebo ho někdo násilně ukončí, Mac zůstane ve stavu „neuspávat“. Spusťte Coffeine znovu, nebo použijte příkaz `sudo pmset -a disablesleep 0`.
-- Zaklopený Mac, který se neuspí, se v tašce může přehřát.
+- If Coffeine crashes or is force-quit, the Mac stays in the "prevent sleep" state. Start Coffeine again, or run `sudo pmset -a disablesleep 0`.
+- A closed Mac that does not sleep can overheat in a bag.
 
-## Odinstalace
+## Uninstall
 
-1. V menu Coffeine vyberte „Odebrat oprávnění pro pmset…“.
-2. Ukončete Coffeine.
-3. Smažte `/Applications/Coffeine.app`.
+1. In the Coffeine menu, select "Remove pmset Permission…".
+2. Quit Coffeine.
+3. Delete `/Applications/Coffeine.app`.
 
-## Struktura projektu
+## Project structure
 
-| Soubor | Účel |
+| File | Purpose |
 |---|---|
-| `Sources/main.swift` | Celá aplikace (AppKit, IOKit, ServiceManagement) |
-| `Info.plist` | Metadata aplikace, `LSUIElement` (bez ikony v Docku) |
-| `CoffeeeCup.icon` | Ikona aplikace z Icon Composeru |
-| `build.sh` | Skript pro sestavení a instalaci |
+| `Sources/main.swift` | The complete app (AppKit, IOKit, ServiceManagement) |
+| `Info.plist` | App metadata, `LSUIElement` (no Dock icon) |
+| `CoffeeeCup.icon` | App icon made with Icon Composer |
+| `build.sh` | Build and install script |

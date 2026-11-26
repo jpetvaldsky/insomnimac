@@ -24,9 +24,9 @@ Coffeine is a macOS menu bar app (AppKit, no Xcode project). It controls whether
 
 - The app must never leave `disablesleep 1` active when it quits. Keep the reset in `applicationWillTerminate`.
 - Keep the sudoers rule as narrow as it is now. Do not allow arbitrary `pmset` arguments.
-- UI strings are in Czech. Code and comments are in English.
+- All text is in English: UI strings, code, comments, and docs.
 - `LSUIElement` is `true`. The app has no Dock icon and no main window.
 
 ## Known issues
 
-- System Settings › Login Items can show a stale generic icon after the app icon changes. Toggle "Spouštět při přihlášení" off and on, then reopen System Settings. Do not run `sfltool resetbtm`, because it resets all login item approvals.
+- System Settings › Login Items can show a stale generic icon after the app icon changes. Toggle "Open at Login" off and on, then reopen System Settings. Do not run `sfltool resetbtm`, because it resets all login item approvals.

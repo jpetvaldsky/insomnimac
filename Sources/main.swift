@@ -173,20 +173,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if !Power.isHelperInstalled {
                 if !Power.installHelper() {
                     preventSleep = false
-                    alert("Uspání nelze zakázat",
-                          "Aplikace potřebuje jednou heslo správce, aby mohla spouštět pmset. Bez toho nelze zablokovat uspání při zaklopení víka.")
+                    alert("Cannot prevent sleep",
+                          "Coffeine needs an administrator password once to run pmset. Without it, the app cannot block sleep when the lid is closed.")
                 }
             }
             if preventSleep && !Power.setSleepDisabled(true) {
                 preventSleep = false
-                alert("Chyba", "Příkaz pmset selhal.")
+                alert("Error", "The pmset command failed.")
             }
         } else if Power.isSleepDisabled {
             Power.setSleepDisabled(false)
         }
 
-        systemAssertion.set(preventSleep, type: kIOPMAssertPreventUserIdleSystemSleep, reason: "Coffeine: uspání zakázáno")
-        displayAssertion.set(preventSleep && keepDisplayOn, type: kIOPMAssertPreventUserIdleDisplaySleep, reason: "Coffeine: displej svítí")
+        systemAssertion.set(preventSleep, type: kIOPMAssertPreventUserIdleSystemSleep, reason: "Coffeine: sleep prevented")
+        displayAssertion.set(preventSleep && keepDisplayOn, type: kIOPMAssertPreventUserIdleDisplaySleep, reason: "Coffeine: display kept on")
         updateIcon()
     }
 
@@ -203,7 +203,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let img = NSImage(systemSymbolName: symbol, accessibilityDescription: "Coffeine")
         img?.isTemplate = true
         statusItem.button?.image = img
-        statusItem.button?.toolTip = preventSleep ? "Coffeine: Mac se neuspí" : "Coffeine: normální uspávání"
+        statusItem.button?.toolTip = preventSleep ? "Coffeine: Mac stays awake" : "Coffeine: normal sleep"
     }
 
     // MARK: Menu
@@ -211,33 +211,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
 
-        let header = NSMenuItem(title: preventSleep ? "Mac se NEUSPÍ (ani po zaklopení)" : "Mac se uspává normálně", action: nil, keyEquivalent: "")
+        let header = NSMenuItem(title: preventSleep ? "Mac stays AWAKE (even with lid closed)" : "Mac sleeps normally", action: nil, keyEquivalent: "")
         header.isEnabled = false
         menu.addItem(header)
         menu.addItem(.separator())
 
-        menu.addItem(item(preventSleep ? "Povolit uspání" : "Zakázat uspání", #selector(togglePrevent), key: "s"))
+        menu.addItem(item(preventSleep ? "Allow Sleep" : "Prevent Sleep", #selector(togglePrevent), key: "s"))
 
-        let display = item("Nechat svítit displej", #selector(toggleDisplay))
+        let display = item("Keep Display On", #selector(toggleDisplay))
         display.state = keepDisplayOn ? .on : .off
         menu.addItem(display)
 
-        let battery = item("Povolit uspání při baterii ≤ \(lowBatteryLimit) %", #selector(toggleBatteryGuard))
+        let battery = item("Allow Sleep When Battery ≤ \(lowBatteryLimit)%", #selector(toggleBatteryGuard))
         battery.state = batteryGuard ? .on : .off
         menu.addItem(battery)
 
         menu.addItem(.separator())
 
-        let login = item("Spouštět při přihlášení", #selector(toggleLogin))
+        let login = item("Open at Login", #selector(toggleLogin))
         login.state = SMAppService.mainApp.status == .enabled ? .on : .off
         menu.addItem(login)
 
         if FileManager.default.fileExists(atPath: Power.sudoersPath) {
-            menu.addItem(item("Odebrat oprávnění pro pmset…", #selector(removeHelper)))
+            menu.addItem(item("Remove pmset Permission…", #selector(removeHelper)))
         }
 
         menu.addItem(.separator())
-        menu.addItem(item("Ukončit Coffeine", #selector(quit), key: "q"))
+        menu.addItem(item("Quit Coffeine", #selector(quit), key: "q"))
     }
 
     private func item(_ title: String, _ action: Selector, key: String = "") -> NSMenuItem {
@@ -258,7 +258,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 try SMAppService.mainApp.register()
             }
         } catch {
-            alert("Spouštění při přihlášení", error.localizedDescription)
+            alert("Open at Login", error.localizedDescription)
         }
     }
 
@@ -281,7 +281,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func notifyLowBattery(_ pct: Int) {
-        alert("Uspání je znovu povoleno", "Baterie má jen \(pct) %. Coffeine vrátil normální uspávání.")
+        alert("Sleep allowed again", "Battery is at \(pct)%. Coffeine restored normal sleep.")
     }
 }
 
